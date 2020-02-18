@@ -1,6 +1,6 @@
 #!/bin/bash 
 #
-# 将指定模块，覆盖掉目标kernel代码
+# 将目标kernel代码，拷贝回本地仓库
 #
 
 # 拷贝目录函数
@@ -69,24 +69,24 @@ function _copy_file() {
 }
 
 # 拷贝bcache到指定目录
-function apply_bcache_module() {
-    bcache_module_src_dir="drivers/md/bcache";
-    bcache_module_dst_dir="$1/$bcache_module_src_dir";
+function submit_bcache_module() {
+    bcache_module_dst_dir="drivers/md/bcache";
+    bcache_module_src_dir="$1/$bcache_module_src_dir";
    
      _copy_dir $bcache_module_src_dir $bcache_module_dst_dir
 }
 
-function apply_bcache_api() {
-   bcache_api_src_file="include/uapi/linux/bcache.h";
-   bcache_api_dst_file="$1/$bcache_api_src_file";
+function submit_bcache_api() {
+   bcache_api_dst_file="include/uapi/linux/bcache.h";
+   bcache_api_src_file="$1/$bcache_api_src_file";
 
    _copy_file $bcache_api_src_file $bcache_api_dst_file
 }
 
-function apply_bcache() {
+function submit_bcache() {
     # TODO 检查是否是Linux源码目录
-    apply_bcache_module $1;
-    apply_bcache_api $1;  
+    submit_bcache_module $1;
+    submit_bcache_api $1;  
 }
 
 
@@ -105,7 +105,7 @@ function main() {
 
     if test $1 = "bcache" -o $1 = "all"
     then 
-        apply_bcache $2
+        submit_bcache $2
     fi
 }
 
