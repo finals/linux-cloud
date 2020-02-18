@@ -31,6 +31,9 @@ function _copy_dir() {
             exit 0;
         fi
     fi
+
+    dst_dir=${dst_dir%/*}
+
     mkdir -p $dst_dir;    
     cp -rf $src_dir $dst_dir;
 }
