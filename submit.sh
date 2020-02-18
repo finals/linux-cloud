@@ -74,15 +74,19 @@ function _copy_file() {
 # 拷贝bcache到指定目录
 function submit_bcache_module() {
     bcache_module_dst_dir="drivers/md/bcache";
-    bcache_module_src_dir="$1/$bcache_module_src_dir";
-   
+    bcache_module_src_dir="$1/$bcache_module_dst_dir";
      _copy_dir $bcache_module_src_dir $bcache_module_dst_dir
+
+    #清理bcache中的.git
+    if test -d "$bcache_module_dst_dir/.git"
+    then
+        rm -rf $bcache_module_dst_dir/.git
+    fi
 }
 
 function submit_bcache_api() {
    bcache_api_dst_file="include/uapi/linux/bcache.h";
-   bcache_api_src_file="$1/$bcache_api_src_file";
-
+   bcache_api_src_file="$1/$bcache_api_dst_file";
    _copy_file $bcache_api_src_file $bcache_api_dst_file
 }
 
