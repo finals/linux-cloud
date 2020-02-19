@@ -75,7 +75,13 @@ function _copy_file() {
 function submit_bcache_module() {
     bcache_module_dst_dir="drivers/md/bcache";
     bcache_module_src_dir="$1/$bcache_module_dst_dir";
-     _copy_dir $bcache_module_src_dir $bcache_module_dst_dir
+    _copy_dir $bcache_module_src_dir $bcache_module_dst_dir
+
+    #清理编译的文件
+    rm -f $bcache_module_dst_dir/*.o $bcache_module_dst_dir/*.cmd $bcache_module_dst_dir/*.mod 
+    rm -f $bcache_module_dst_dir/*.mod.c $bcache_module_dst_dir/*.order 
+    rm -f $bcache_module_dst_dir/.*.cmd $bcache_module_dst_dir/.*.d 
+    rm -f $bcache_module_dst_dir/*.ko    
 
     #清理bcache中的.git
     if test -d "$bcache_module_dst_dir/.git"
