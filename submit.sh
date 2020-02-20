@@ -16,7 +16,7 @@ function _copy_dir() {
     
     if test ! -d $src_dir
     then
-        echo "$src_dir is not exits.";
+        echo "$src_dir is not exist.";
         exit -1;
     fi
 
@@ -96,10 +96,17 @@ function submit_bcache_api() {
    _copy_file $bcache_api_src_file $bcache_api_dst_file
 }
 
+function submit_bcache_trace_event() {
+    bcache_trace_event_dst_file="include/trace/events/bcache.h";
+    bcache_trace_event_src_file="$1/$bcache_trace_event_dst_file";
+    _copy_file $bcache_trace_event_src_file $bcache_trace_event_dst_file
+}
+
 function submit_bcache() {
     # TODO 检查是否是Linux源码目录
     submit_bcache_module $1;
     submit_bcache_api $1;  
+    submit_bcache_trace_event $1;
 }
 
 
