@@ -87,10 +87,17 @@ function apply_bcache_api() {
    _copy_file $bcache_api_src_file $bcache_api_dst_file
 }
 
+function apply_bcache_trace_event() {
+    bcache_trace_event_src_file="include/trace/events/bcache.h";
+    bcache_trace_event_dst_file="$1/$bcache_trace_event_src_file";
+    _copy_file $bcache_trace_event_src_file $bcache_trace_event_dst_file
+}
+
 function apply_bcache() {
     # TODO 检查是否是Linux源码目录
     apply_bcache_module $1;
-    apply_bcache_api $1;  
+    apply_bcache_api $1; 
+    apply_bcache_trace_event $1; 
 }
 
 
