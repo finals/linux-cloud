@@ -54,7 +54,7 @@ static const char * const error_actions[] = {
 	NULL
 };
 
-#define VERSION "20191223-1459"
+#define VERSION "release-2.x"
 
 write_attribute(attach);
 write_attribute(detach);
