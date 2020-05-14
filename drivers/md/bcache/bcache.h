@@ -387,6 +387,8 @@ struct cached_dev {
 	int64_t			writeback_rate_integral_scaled;
 	int32_t			writeback_rate_change;
 
+	uint64_t            io_count;
+	unsigned int        writeback_rate_maximum_threshold; //writeback_rate_update_seconds的时间间隔内，IO次数低于这个值，将触发最大速率写
 	unsigned int		writeback_rate_update_seconds;
 	unsigned int		writeback_rate_i_term_inverse;  //表示1秒内出错的概率阈值，默认10000，表示1秒内高于1/10000的错误会记录下来
 	unsigned int		writeback_rate_p_term_inverse;  //用于计算flush速率，默认40，表示速率为在40秒内能刷脏完成
@@ -521,7 +523,7 @@ struct cache_set {
 	struct cache_accounting accounting;
 
 	unsigned long		flags;
-	atomic_t		idle_counter;
+	//atomic_t		idle_counter;
 	atomic_t		at_max_writeback_rate;
 
 	struct cache_sb		sb;

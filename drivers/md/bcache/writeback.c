@@ -119,6 +119,11 @@ static void __update_writeback_rate(struct cached_dev *dc)
 	dc->writeback_rate_target = target;
 }
 
+void calc_writeback_rate(struct cached_dev *dc)
+{
+    __update_writeback_rate(dc);
+}
+
 static bool set_at_max_writeback_rate(struct cache_set *c,
 				       struct cached_dev *dc)
 {
@@ -129,6 +134,14 @@ static bool set_at_max_writeback_rate(struct cache_set *c,
 	/* Don't set max writeback rate if gc is running */
 	if (!c->gc_mark_valid)
 		return false;
+
+    /* writeback_rate_maximum_threshold == 0, 表示无条件最大速率刷盘 */
+    if (dc->writeback_rate_maximum_threshold > 0 && dc->io_count > dc->writeback_rate_maximum_threshold) {
+		dc->io_count = 0;
+        return false;
+    }
+	dc->io_count = 0;
+
 	/*
 	 * Idle_counter is increased everytime when update_writeback_rate() is
 	 * called. If all backing devices attached to the same cache set have
@@ -142,10 +155,11 @@ static bool set_at_max_writeback_rate(struct cache_set *c,
 	 * back mode, but it still works well with limited extra rounds of
 	 * update_writeback_rate().
 	 */
+	/*
 	if (atomic_inc_return(&c->idle_counter) <
 	    atomic_read(&c->attached_dev_nr) * 6)
 		return false;
-
+    */
 	if (atomic_read(&c->at_max_writeback_rate) != 1)
 		atomic_set(&c->at_max_writeback_rate, 1);
 
@@ -162,11 +176,12 @@ static bool set_at_max_writeback_rate(struct cache_set *c,
 	 * Then the writeback rate is set to 1, and its new value should be
 	 * decided via __update_writeback_rate().
 	 */
+	/*
 	if ((atomic_read(&c->idle_counter) <
 	     atomic_read(&c->attached_dev_nr) * 6) ||
 	    !atomic_read(&c->at_max_writeback_rate))
 		return false;
-
+	*/
 	return true;
 }
 
@@ -853,6 +868,9 @@ void bch_cached_dev_writeback_init(struct cached_dev *dc)
 	dc->writeback_rate_update_seconds = WRITEBACK_RATE_UPDATE_SECS_DEFAULT;
 	dc->writeback_rate_p_term_inverse = 40;
 	dc->writeback_rate_i_term_inverse = 10000;
+
+	dc->io_count = 0;
+	dc->writeback_rate_maximum_threshold = 100;
 
 	dc->rate_limit.wb_io_count   = 0;
 	dc->rate_limit.wb_data_count = 0;

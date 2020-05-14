@@ -1177,8 +1177,8 @@ static blk_qc_t cached_dev_make_request(struct request_queue *q,
 	}
 
 	if (likely(d->c)) {
-		if (atomic_read(&d->c->idle_counter))
-			atomic_set(&d->c->idle_counter, 0);
+		//if (atomic_read(&d->c->idle_counter))
+		//	atomic_set(&d->c->idle_counter, 0);
 		/*
 		 * If at_max_writeback_rate of cache set is true and new I/O
 		 * comes, quit max writeback rate of all cached devices
@@ -1212,6 +1212,7 @@ static blk_qc_t cached_dev_make_request(struct request_queue *q,
 					      cached_dev_nodata,
 					      bcache_wq);
 		} else {
+			dc->io_count++;
 			s->iop.bypass = check_should_bypass(dc, bio);
 
 			if (rw)

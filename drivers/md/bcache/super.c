@@ -1044,9 +1044,18 @@ static void cancel_writeback_rate_update_dwork(struct cached_dev *dc)
 	cancel_delayed_work_sync(&dc->writeback_rate_update);
 }
 
+static void update_cached_dev_target(struct cache_set *c)
+{
+    struct cached_dev *dc;
+
+	list_for_each_entry(dc, &c->cached_devs, list)
+        calc_writeback_rate(dc);
+}
+
 static void cached_dev_detach_finish(struct work_struct *w)
 {
 	struct cached_dev *dc = container_of(w, struct cached_dev, detach);
+	struct cache_set *c  = dc->disk.c;
 	struct closure cl;
 
 	closure_init_stack(&cl);
@@ -1071,9 +1080,12 @@ static void cached_dev_detach_finish(struct work_struct *w)
 
 	mutex_lock(&bch_register_lock);
 
-	calc_cached_dev_sectors(dc->disk.c);
 	bcache_device_detach(&dc->disk);
 	list_move(&dc->list, &uncached_devices);
+
+	calc_cached_dev_sectors(c);
+	update_cached_dev_target(c);
+	dc->writeback_rate_target = 0;
 
 	clear_bit(BCACHE_DEV_DETACHING, &dc->disk.flags);
 	clear_bit(BCACHE_DEV_UNLINK_DONE, &dc->disk.flags);
@@ -1201,6 +1213,7 @@ int bch_cached_dev_attach(struct cached_dev *dc, struct cache_set *c,
 	bcache_device_attach(&dc->disk, c, u - c->uuids); //关联后端设备到缓存设备
 	list_move(&dc->list, &c->cached_devs); //cached_dev链入cache_set的cached_devs字段中
 	calc_cached_dev_sectors(c);
+	update_cached_dev_target(c);
 
 	/*
 	 * dc->c must be set before dc->count != 0 - paired with the mb in

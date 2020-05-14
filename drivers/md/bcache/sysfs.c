@@ -54,7 +54,7 @@ static const char * const error_actions[] = {
 	NULL
 };
 
-#define VERSION "release-2.x"
+#define VERSION "20191223-1459"
 
 write_attribute(attach);
 write_attribute(detach);
@@ -118,6 +118,7 @@ rw_attribute(writeback_percent);
 rw_attribute(writeback_delay);
 rw_attribute(writeback_rate);
 
+rw_attribute(writeback_rate_maximum_threshold);
 rw_attribute(writeback_rate_update_seconds);
 rw_attribute(writeback_rate_i_term_inverse);
 rw_attribute(writeback_rate_p_term_inverse);
@@ -205,6 +206,7 @@ SHOW(__bch_cached_dev)
 	sysfs_printf(io_errors,		"%i", atomic_read(&dc->io_errors));
 	sysfs_printf(io_error_limit,	"%i", dc->error_limit);
 	sysfs_printf(io_disable,	"%i", dc->io_disable);
+	var_print(writeback_rate_maximum_threshold);
 	var_print(writeback_rate_update_seconds);
 	var_print(writeback_rate_i_term_inverse);
 	var_print(writeback_rate_p_term_inverse);
@@ -315,8 +317,27 @@ STORE(__cached_dev)
 	sysfs_strtoul_bool(writeback_running, dc->writeback_running);
 	sysfs_strtoul_clamp(writeback_delay, dc->writeback_delay, 0, UINT_MAX);
 
-	sysfs_strtoul_clamp(writeback_percent, dc->writeback_percent,
-			    0, bch_cutoff_writeback);
+	//sysfs_strtoul_clamp(writeback_percent, dc->writeback_percent,
+	//		    0, bch_cutoff_writeback);
+	if (attr == &sysfs_writeback_percent) {
+        ssize_t ret;
+		unsigned long v = 0;
+
+	    ret = strtoul_safe_clamp(buf, v, 0, bch_cutoff_writeback);
+		if (!ret) {
+            dc->writeback_percent = v;
+
+            if (dc->disk.c) {
+				struct cached_dev *tdc;
+                list_for_each_entry(tdc, &dc->disk.c->cached_devs, list)
+                    calc_writeback_rate(tdc);
+		    }
+
+			return size;
+		}
+
+		return ret;
+	}
 
 	if (attr == &sysfs_writeback_rate) {
 		ssize_t ret;
@@ -332,6 +353,9 @@ STORE(__cached_dev)
 		return ret;
 	}
 
+    sysfs_strtoul_clamp(writeback_rate_maximum_threshold,
+			    dc->writeback_rate_maximum_threshold,
+			    0, UINT_MAX);
 	sysfs_strtoul_clamp(writeback_rate_update_seconds,
 			    dc->writeback_rate_update_seconds,
 			    1, WRITEBACK_RATE_UPDATE_SECS_MAX);
@@ -509,6 +533,7 @@ static struct attribute *bch_cached_dev_files[] = {
 	&sysfs_writeback_delay,
 	&sysfs_writeback_percent,
 	&sysfs_writeback_rate,
+	&sysfs_writeback_rate_maximum_threshold,
 	&sysfs_writeback_rate_update_seconds,
 	&sysfs_writeback_rate_i_term_inverse,
 	&sysfs_writeback_rate_p_term_inverse,
