@@ -23,6 +23,7 @@
 #include <linux/random.h>
 #include <linux/reboot.h>
 #include <linux/sysfs.h>
+#include <linux/sched/signal.h>
 
 unsigned int bch_cutoff_writeback;
 unsigned int bch_cutoff_writeback_sync;
@@ -851,6 +852,18 @@ static int bcache_device_init(struct bcache_device *d, unsigned int block_size,
 				BCACHE_DEVICE_IDX_MAX, GFP_KERNEL);
 	if (idx < 0)
 		return idx;
+
+	/*
+	 * There is a timeout in udevd, if the bcache device is registering
+	 * by udev rules, and not completed in time, the udevd may kill the
+	 * registration process. In this condition, there will be pending
+	 * signal here and cause bioset_init() failed for internally creating
+	 * its kthread. Here the registration should ignore the timeout and
+	 * continue, it is safe to ignore the pending signal and avoid to
+	 * fail bcache registration in boot up time.
+	 */
+	if (signal_pending(current))
+		flush_signals(current);
 
 	if (bioset_init(&d->bio_split, 4, offsetof(struct bbio, bio),
 			BIOSET_NEED_BVECS|BIOSET_NEED_RESCUER))
