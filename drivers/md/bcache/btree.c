@@ -1791,7 +1791,7 @@ static void bch_btree_gc(struct cache_set *c)
 
 	/* if CACHE_SET_IO_DISABLE set, gc thread should stop too */
 	do {  //对btree的根节点调用，btree_root将第一个参数gc_root组装成函数: bch_btree_gc_root
-		ret = btree_root(gc_root, c, &op, &writes, &stats);  //遍历btree，标记哪些bucket可被gc回收
+		ret = bcache_btree_root(gc_root, c, &op, &writes, &stats);  //遍历btree，标记哪些bucket可被gc回收
 		closure_sync(&writes);
 		cond_resched();
 
@@ -1901,7 +1901,7 @@ static int bch_btree_check_recurse(struct btree *b, struct btree_op *op)
 			}
 
 			if (p)
-				ret = btree(check_recurse, p, b, op);
+				ret = bcache_btree(check_recurse, p, b, op);
 
 			p = k;
 		} while (p && !ret);
@@ -1916,7 +1916,7 @@ int bch_btree_check(struct cache_set *c)
 
 	bch_btree_op_init(&op, SHRT_MAX);
 
-	return btree_root(check_recurse, c, &op);
+	return bcache_btree_root(check_recurse, c, &op);
 }
 
 void bch_initial_gc_finish(struct cache_set *c)
@@ -2356,7 +2356,7 @@ static int bch_btree_map_nodes_recurse(struct btree *b, struct btree_op *op,
 
 		while ((k = bch_btree_iter_next_filter(&iter, &b->keys,
 						       bch_ptr_bad))) {
-			ret = btree(map_nodes_recurse, k, b,
+			ret = bcache_btree(map_nodes_recurse, k, b,
 				    op, from, fn, flags);
 			from = NULL;
 
@@ -2374,7 +2374,7 @@ static int bch_btree_map_nodes_recurse(struct btree *b, struct btree_op *op,
 int __bch_btree_map_nodes(struct btree_op *op, struct cache_set *c,
 			  struct bkey *from, btree_map_nodes_fn *fn, int flags)
 {
-	return btree_root(map_nodes_recurse, c, op, from, fn, flags);
+	return bcache_btree_root(map_nodes_recurse, c, op, from, fn, flags);
 }
 
 int bch_btree_map_keys_recurse(struct btree *b, struct btree_op *op,
@@ -2390,7 +2390,7 @@ int bch_btree_map_keys_recurse(struct btree *b, struct btree_op *op,
 	while ((k = bch_btree_iter_next_filter(&iter, &b->keys, bch_ptr_bad))) {
 		ret = !b->level
 			? fn(op, b, k)  //level等于0，表示叶子节点，回调函数处理叶子节点
-			: btree(map_keys_recurse, k, b, op, from, fn, flags); //非叶子节点，递归调用 bch_btree_map_keys_recurse
+			: bcache_btree(map_keys_recurse, k, b, op, from, fn, flags); //非叶子节点，递归调用 bch_btree_map_keys_recurse
 		from = NULL;
 
 		if (ret != MAP_CONTINUE)
@@ -2407,7 +2407,7 @@ int bch_btree_map_keys_recurse(struct btree *b, struct btree_op *op,
 int bch_btree_map_keys(struct btree_op *op, struct cache_set *c,
 		       struct bkey *from, btree_map_keys_fn *fn, int flags)
 {   //递归遍历b+tree进行查找，调用 bch_btree_map_keys_recurse
-	return btree_root(map_keys_recurse, c, op, from, fn, flags);
+	return bcache_btree_root(map_keys_recurse, c, op, from, fn, flags);
 }
 
 /* Keybuf code */
