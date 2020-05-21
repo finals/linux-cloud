@@ -738,13 +738,13 @@ int bch_cache_allocator_start(struct cache *ca)
 	struct task_struct *k;
 
 	/*
-	 * In case previous btree check operation occupies too many
-	 * system memory for bcache btree node cache, and the
-	 * registering process is selected by OOM killer. Here just
-	 * ignore the SIGKILL sent by OOM killer if there is, to
-	 * avoid kthread_run() being failed by pending signals. The
-	 * bcache registering process will exit after the registration
-	 * done.
+	 * In case previous btree check operation takes too long time
+	 * for bcache btree node cache, if the registration process is
+	 * executed from a bcache udev rule and killed by udevd due to
+	 * timeout (default as 180s) in system boot time, here just
+	 * ignore the signal sent by udev if there is, to avoid
+	 * kthread_run() being failed by pending signals. The bcache
+	 * registering process will exit after the registration done.
 	 */
 	if (signal_pending(current))
 	    flush_signals(current);
