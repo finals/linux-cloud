@@ -1959,7 +1959,7 @@ static int bch_btree_check_thread(void *arg)
 				 */
 				atomic_set(&check_state->enough, 1);
 				/* Update check_state->enough earlier */
-				smp_mb();
+				smp_mb__after_atomic();
 				goto out;
 			}
 			skip_nr--;
@@ -1984,7 +1984,7 @@ static int bch_btree_check_thread(void *arg)
 out:
 	info->result = ret;
 	/* update check_state->started among all CPUs */
-	smp_mb();
+	smp_mb__before_atomic();
 	if (atomic_dec_and_test(&check_state->started))
 		wake_up(&check_state->wait);
 
